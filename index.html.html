@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Gestión de Clientes — Pronto Express</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;900&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --amarillo: #FFD000;
+    --naranja: #E07820;
+    --naranja-dark: #b85e10;
+    --bg: #f5f4f0;
+    --white: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #666;
+    --border: #e0ddd5;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --azul: #1a6fb5;
+    --azul-light: #eaf3fc;
+    --azul-border: #a8cef0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Barlow', sans-serif; background: var(--bg); min-height: 100vh; color: var(--text); padding-bottom: 2rem; }
+
+  /* HEADER */
+  .header { background: var(--naranja); padding: 1.25rem 1.25rem 1.75rem; position: relative; overflow: hidden; }
+  .header::after { content: ''; position: absolute; bottom: -18px; left: 0; right: 0; height: 36px; background: var(--bg); border-radius: 50% 50% 0 0 / 100% 100% 0 0; }
+  .header-brand { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--white); letter-spacing: 0.5px; text-transform: uppercase; line-height: 1; }
+  .header-brand span { color: var(--amarillo); }
+  .header-sub { font-size: 13px; color: rgba(255,255,255,0.8); margin-top: 4px; font-weight: 500; }
+  .header-badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; margin-top: 10px; transition: all 0.2s; }
+  .badge-alta   { background: var(--amarillo); color: var(--naranja-dark); }
+  .badge-modif  { background: var(--azul); color: white; }
+
+  /* PANTALLAS */
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .content { padding: 1.75rem 1rem 0; max-width: 480px; margin: 0 auto; }
+
+  /* STEP 0: TIPO OPERACION */
+  .op-title { text-align: center; font-size: 15px; font-weight: 700; color: var(--text-muted); margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.5rem; }
+  .op-btn {
+    border-radius: var(--radius);
+    padding: 2rem 1rem 1.5rem;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    cursor: pointer; transition: all 0.15s; font-family: 'Barlow', sans-serif;
+    border: 2.5px solid var(--border); background: var(--white);
+  }
+  .op-btn:active { transform: scale(0.96); }
+  .op-btn .op-icon { font-size: 36px; line-height: 1; }
+  .op-btn .op-label { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
+  .op-btn .op-desc { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; text-align: center; }
+  .op-btn.alta  { border-color: var(--naranja); }
+  .op-btn.alta .op-label { color: var(--naranja); }
+  .op-btn.modif { border-color: var(--azul); }
+  .op-btn.modif .op-label { color: var(--azul); }
+
+  /* MOSAICO VENDEDORES */
+  .mosaico-title { text-align: center; font-size: 15px; font-weight: 700; color: var(--text-muted); margin-bottom: 1.25rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .mosaico-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem; }
+  .vendedor-btn {
+    background: var(--white); border: 2px solid var(--border); border-radius: var(--radius);
+    padding: 1.5rem 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    cursor: pointer; transition: all 0.15s; font-family: 'Barlow', sans-serif;
+  }
+  .vendedor-btn:active { transform: scale(0.96); }
+  .vendedor-btn .v-num { font-family: 'Barlow Condensed', sans-serif; font-size: 38px; font-weight: 900; line-height: 1; }
+  .vendedor-btn .v-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .op-alta  .vendedor-btn .v-num { color: var(--naranja); }
+  .op-modif .vendedor-btn .v-num { color: var(--azul); }
+  .op-alta  .vendedor-btn:hover, .op-alta  .vendedor-btn:active { border-color: var(--naranja); background: #fff8f3; }
+  .op-modif .vendedor-btn:hover, .op-modif .vendedor-btn:active { border-color: var(--azul); background: var(--azul-light); }
+
+  /* CAMPO N° CLIENTE (solo en modificación) */
+  .nro-cliente-card {
+    background: var(--azul-light);
+    border: 2px solid var(--azul-border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .nro-cliente-card .nro-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--azul); margin-bottom: 8px; }
+  .nro-cliente-card input {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900;
+    background: var(--white); border: 1.5px solid var(--azul-border); border-radius: var(--radius-sm);
+    padding: 10px 14px; color: var(--azul); outline: none; width: 100%;
+    -webkit-appearance: none; letter-spacing: 0.05em;
+  }
+  .nro-cliente-card input:focus { border-color: var(--azul); }
+  .nro-cliente-card input::placeholder { color: #aac8e8; font-size: 22px; }
+
+  /* FORM */
+  .section { margin-bottom: 1.25rem; }
+  .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--naranja); margin-bottom: 8px; padding-left: 4px; }
+  .section-title.modif { color: var(--azul); }
+  .card { background: var(--white); border-radius: var(--radius); padding: 1rem; display: flex; flex-direction: column; gap: 10px; border: 1px solid var(--border); }
+
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .field label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .req { color: var(--naranja); margin-left: 2px; }
+  .field input, .field select, .field textarea {
+    font-family: 'Barlow', sans-serif; font-size: 15px; font-weight: 500;
+    background: #faf9f7; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    padding: 10px 12px; color: var(--text); outline: none; width: 100%;
+    transition: border-color 0.15s; -webkit-appearance: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--naranja); background: var(--white); }
+  .op-modif .field input:focus, .op-modif .field select:focus, .op-modif .field textarea:focus { border-color: var(--azul); }
+  .field textarea { resize: none; min-height: 64px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* TIPO */
+  .tipo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tipo-btn { padding: 10px 8px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; background: #faf9f7; color: var(--text-muted); transition: all 0.15s; text-align: center; }
+  .op-alta  .tipo-btn.active { background: var(--naranja); color: var(--white); border-color: var(--naranja); }
+  .op-modif .tipo-btn.active { background: var(--azul); color: var(--white); border-color: var(--azul); }
+
+  /* DÍAS */
+  .dias-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+  .dia-item { position: relative; }
+  .dia-item input[type=radio] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .dia-item label {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 10px 0; border-radius: var(--radius-sm); border: 1.5px solid var(--border);
+    font-size: 12px; font-weight: 700; cursor: pointer; background: #faf9f7; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.04em; transition: all 0.15s; user-select: none; gap: 2px;
+  }
+  .dia-item label .dia-num { font-size: 10px; font-weight: 600; opacity: 0.6; }
+  .op-alta  .dia-item input[type=radio]:checked + label { background: var(--amarillo); border-color: var(--amarillo); color: #7a4800; }
+  .op-modif .dia-item input[type=radio]:checked + label { background: var(--azul); border-color: var(--azul); color: white; }
+  .dia-item input[type=radio]:checked + label .dia-num { opacity: 1; }
+
+  /* ZONA BADGE */
+  .zona-badge { border-radius: var(--radius); padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border); }
+  .op-alta  .zona-badge { background: linear-gradient(135deg, var(--naranja), var(--naranja-dark)); }
+  .op-modif .zona-badge { background: linear-gradient(135deg, var(--azul), #0f4a80); }
+  .zona-badge .zb-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 0.06em; }
+  .zona-badge .zb-value { font-family: 'Barlow Condensed', sans-serif; font-size: 42px; font-weight: 900; color: var(--amarillo); line-height: 1; }
+  .op-modif .zona-badge .zb-value { color: #9fd3f8; }
+  .zona-badge .zb-info { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+
+  /* VENDEDOR CHIP */
+  .vendedor-chip { display: flex; align-items: center; gap: 10px; background: var(--white); border-radius: var(--radius-sm); padding: 8px 12px; }
+  .op-alta  .vendedor-chip { border: 1.5px solid var(--amarillo); }
+  .op-modif .vendedor-chip { border: 1.5px solid var(--azul-border); }
+  .vendedor-chip .vc-num { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 900; line-height: 1; }
+  .op-alta  .vendedor-chip .vc-num { color: var(--naranja); }
+  .op-modif .vendedor-chip .vc-num { color: var(--azul); }
+  .vendedor-chip .vc-label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .vc-change { margin-left: auto; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: underline; padding: 4px; }
+  .op-alta  .vc-change { color: var(--naranja); }
+  .op-modif .vc-change { color: var(--azul); }
+
+  /* HORARIO */
+  .horario-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+  .horario-sep { font-size: 14px; font-weight: 700; color: var(--text-muted); text-align: center; }
+
+  /* ERROR */
+  .error-box { display: none; background: #fff0f0; border: 1.5px solid #ffb3b3; border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; font-weight: 600; color: #c0392b; margin-bottom: 12px; }
+
+  /* BOTONES */
+  .btn-enviar { width: 100%; padding: 16px; background: #25D366; color: white; border: none; border-radius: var(--radius); font-family: 'Barlow', sans-serif; font-size: 17px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; letter-spacing: 0.02em; transition: opacity 0.15s, transform 0.1s; }
+  .btn-enviar:active { opacity: 0.88; transform: scale(0.98); }
+  .btn-enviar svg { width: 22px; height: 22px; fill: white; flex-shrink: 0; }
+  .btn-limpiar { width: 100%; padding: 12px; background: transparent; color: var(--text-muted); border: 1.5px solid var(--border); border-radius: var(--radius); font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+  .btn-volver { display: block; width: 100%; padding: 11px; background: transparent; color: var(--text-muted); border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; margin-bottom: 1.25rem; }
+
+  .footer { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 1.5rem; padding: 0 1rem; }
+  .footer span { color: var(--naranja); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">Pronto <span>Express</span></div>
+  <div class="header-sub">Sistema de gestión de clientes</div>
+  <div class="header-badge badge-alta" id="header-badge">✦ Nueva operación</div>
+</div>
+
+<!-- PANTALLA 0: TIPO DE OPERACIÓN -->
+<div class="screen active" id="screen-op">
+  <div class="content">
+    <div class="op-title">¿Qué vas a hacer?</div>
+    <div class="op-grid">
+      <button class="op-btn alta" onclick="elegirOp('alta')">
+        <div class="op-icon">🟢</div>
+        <div class="op-label">Alta</div>
+        <div class="op-desc">Cliente nuevo</div>
+      </button>
+      <button class="op-btn modif" onclick="elegirOp('modif')">
+        <div class="op-icon">✏️</div>
+        <div class="op-label">Modif.</div>
+        <div class="op-desc">Cliente existente</div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- PANTALLA 1: ELEGIR VENDEDOR -->
+<div class="screen" id="screen-vendedor">
+  <div class="content">
+    <button class="btn-volver" onclick="volverA('screen-op')">← Volver</button>
+    <div class="mosaico-title">¿Quién sos?</div>
+    <div class="mosaico-grid">
+      <button class="vendedor-btn" onclick="elegirVendedor(24)"><div class="v-num">V24</div><div class="v-label">Vendedor</div></button>
+      <button class="vendedor-btn" onclick="elegirVendedor(26)"><div class="v-num">V26</div><div class="v-label">Vendedor</div></button>
+      <button class="vendedor-btn" onclick="elegirVendedor(28)"><div class="v-num">V28</div><div class="v-label">Vendedor</div></button>
+      <button class="vendedor-btn" onclick="elegirVendedor(29)"><div class="v-num">V29</div><div class="v-label">Vendedor</div></button>
+      <button class="vendedor-btn" onclick="elegirVendedor(30)"><div class="v-num">V30</div><div class="v-label">Vendedor</div></button>
+      <button class="vendedor-btn" onclick="elegirVendedor(31)"><div class="v-num">V31</div><div class="v-label">Vendedor</div></button>
+    </div>
+  </div>
+</div>
+
+<!-- PANTALLA 2: FORMULARIO -->
+<div class="screen" id="screen-form">
+  <div class="content">
+
+    <!-- VENDEDOR CHIP -->
+    <div class="section">
+      <div class="section-title" id="st-vendedor">Vendedor</div>
+      <div class="vendedor-chip">
+        <div class="vc-num" id="chip-num">V26</div>
+        <div class="vc-label">Vendedor activo</div>
+        <div class="vc-change" onclick="volverA('screen-vendedor')">Cambiar</div>
+      </div>
+    </div>
+
+    <!-- N° CLIENTE (solo en modificación) -->
+    <div id="nro-cliente-section" style="display:none">
+      <div class="nro-cliente-card">
+        <div class="nro-label">🔵 Número de cliente existente</div>
+        <input type="text" id="nro-cliente" placeholder="Ej: 00542" inputmode="numeric" maxlength="10">
+      </div>
+    </div>
+
+    <!-- ZONA AUTO -->
+    <div class="section">
+      <div class="section-title" id="st-zona">Zona asignada</div>
+      <div class="zona-badge">
+        <div>
+          <div class="zb-label">Zona</div>
+          <div class="zb-info" id="zona-info">Seleccioná un día de visita</div>
+        </div>
+        <div class="zb-value" id="zona-val">—</div>
+      </div>
+    </div>
+
+    <!-- DÍAS -->
+    <div class="section">
+      <div class="section-title" id="st-dias">Día de visita <span class="req">*</span></div>
+      <div class="card">
+        <div class="dias-grid">
+          <div class="dia-item"><input type="radio" name="dia" id="d-lun" value="1" onchange="actualizarZona()"><label for="d-lun">Lun<span class="dia-num">·1</span></label></div>
+          <div class="dia-item"><input type="radio" name="dia" id="d-mar" value="2" onchange="actualizarZona()"><label for="d-mar">Mar<span class="dia-num">·2</span></label></div>
+          <div class="dia-item"><input type="radio" name="dia" id="d-mie" value="3" onchange="actualizarZona()"><label for="d-mie">Mié<span class="dia-num">·3</span></label></div>
+          <div class="dia-item"><input type="radio" name="dia" id="d-jue" value="4" onchange="actualizarZona()"><label for="d-jue">Jue<span class="dia-num">·4</span></label></div>
+          <div class="dia-item"><input type="radio" name="dia" id="d-vie" value="5" onchange="actualizarZona()"><label for="d-vie">Vie<span class="dia-num">·5</span></label></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTE -->
+    <div class="section">
+      <div class="section-title" id="st-datos">Datos del cliente</div>
+      <div class="card">
+        <div class="field">
+          <label>Razón social <span class="req">*</span></label>
+          <input type="text" id="razon" placeholder="Nombre o empresa">
+        </div>
+        <div class="field">
+          <label>Domicilio <span class="req">*</span></label>
+          <input type="text" id="domicilio" placeholder="Ej: Ayacucho 2887">
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Ciudad</label>
+            <input type="text" id="ciudad" placeholder="Rosario">
+          </div>
+          <div class="field">
+            <label>Teléfono</label>
+            <input type="tel" id="telefono" placeholder="341-000 0000" inputmode="tel">
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>CUIT</label>
+            <input type="text" id="cuit" placeholder="20-12345678-9" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label>Ing. Brutos</label>
+            <input type="text" id="ing-brutos" placeholder="—">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIPO -->
+    <div class="section">
+      <div class="section-title" id="st-tipo">Tipo de cliente</div>
+      <div class="card">
+        <div class="tipo-grid">
+          <button class="tipo-btn" onclick="selectTipo(this,'Almacén')">Almacén</button>
+          <button class="tipo-btn" onclick="selectTipo(this,'Supermercado')">Supermercado</button>
+          <button class="tipo-btn" onclick="selectTipo(this,'Kiosco')">Kiosco</button>
+          <button class="tipo-btn" onclick="selectTipo(this,'Otro')">Otro</button>
+        </div>
+        <div class="field" id="otro-wrap" style="display:none">
+          <label>Especificá</label>
+          <input type="text" id="otro-tipo" placeholder="Tipo de cliente...">
+        </div>
+      </div>
+    </div>
+
+    <!-- HORARIO -->
+    <div class="section">
+      <div class="section-title" id="st-horario">Horario de atención</div>
+      <div class="card">
+        <div class="horario-row">
+          <div class="field"><label>Desde</label><input type="time" id="h-desde" value="08:00"></div>
+          <div class="horario-sep">→</div>
+          <div class="field"><label>Hasta</label><input type="time" id="h-hasta" value="14:00"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OBS -->
+    <div class="section">
+      <div class="section-title" id="st-obs">Observaciones</div>
+      <div class="card">
+        <div class="field">
+          <textarea id="obs" placeholder="Notas adicionales..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div id="error-box" class="error-box"></div>
+
+    <button class="btn-enviar" onclick="enviar()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.121 1.532 5.854L.054 23.177a.75.75 0 0 0 .918.919l5.401-1.463A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.696 9.696 0 0 1-4.95-1.355l-.355-.21-3.684.997.986-3.604-.228-.368A9.697 9.697 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
+      Enviar por WhatsApp
+    </button>
+    <button class="btn-limpiar" onclick="limpiar()">Limpiar formulario</button>
+    <div class="footer"><span>Pronto Express</span> · Sistema interno · v1.0</div>
+  </div>
+</div>
+
+<script>
+  let operacion = '';   // 'alta' | 'modif'
+  let vendedorSel = null;
+  let tipoSel = '';
+  const diasNombre = { '1':'Lunes','2':'Martes','3':'Miércoles','4':'Jueves','5':'Viernes' };
+
+  function elegirOp(op) {
+    operacion = op;
+    const formEl = document.getElementById('screen-form');
+    const badge  = document.getElementById('header-badge');
+
+    // Aplica clase de color al formulario
+    formEl.classList.remove('op-alta','op-modif');
+    document.getElementById('screen-vendedor').classList.remove('op-alta','op-modif');
+    formEl.classList.add('op-' + op);
+    document.getElementById('screen-vendedor').classList.add('op-' + op);
+
+    // Badge del header
+    if (op === 'alta') {
+      badge.className = 'header-badge badge-alta';
+      badge.textContent = '✦ Alta de cliente';
+    } else {
+      badge.className = 'header-badge badge-modif';
+      badge.textContent = '✏️ Modificación';
+    }
+
+    // Muestra/oculta campo n° cliente
+    document.getElementById('nro-cliente-section').style.display = op === 'modif' ? 'block' : 'none';
+
+    ir('screen-vendedor');
+  }
+
+  function elegirVendedor(num) {
+    vendedorSel = num;
+    document.getElementById('chip-num').textContent = 'V' + num;
+    actualizarZona();
+    ir('screen-form');
+  }
+
+  function volverA(id) { ir(id); }
+
+  function ir(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  function actualizarZona() {
+    const diaEl = document.querySelector('input[name="dia"]:checked');
+    const zonaVal  = document.getElementById('zona-val');
+    const zonaInfo = document.getElementById('zona-info');
+    if (diaEl && vendedorSel) {
+      zonaVal.textContent  = '' + vendedorSel + diaEl.value;
+      zonaInfo.textContent = 'V' + vendedorSel + ' · ' + diasNombre[diaEl.value];
+    } else {
+      zonaVal.textContent  = '—';
+      zonaInfo.textContent = 'Seleccioná un día de visita';
+    }
+  }
+
+  function selectTipo(btn, tipo) {
+    tipoSel = tipo;
+    document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('otro-wrap').style.display = tipo === 'Otro' ? 'flex' : 'none';
+  }
+
+  function val(id) { return document.getElementById(id).value.trim(); }
+  function fmtTime(t) { return t ? t + 'hs' : '—'; }
+
+  function enviar() {
+    const errBox = document.getElementById('error-box');
+    errBox.style.display = 'none';
+
+    const diaEl = document.querySelector('input[name="dia"]:checked');
+    const razon = val('razon');
+    const dom   = val('domicilio');
+    const nroCliente = val('nro-cliente');
+
+    if (operacion === 'modif' && !nroCliente) {
+      errBox.textContent = '⚠ Ingresá el número de cliente a modificar.';
+      errBox.style.display = 'block'; return;
+    }
+    if (!diaEl)  { errBox.textContent = '⚠ Seleccioná el día de visita.'; errBox.style.display = 'block'; return; }
+    if (!razon)  { errBox.textContent = '⚠ La razón social es obligatoria.'; errBox.style.display = 'block'; return; }
+    if (!dom)    { errBox.textContent = '⚠ El domicilio es obligatorio.'; errBox.style.display = 'block'; return; }
+
+    const zona   = '' + vendedorSel + diaEl.value;
+    const diaNom = diasNombre[diaEl.value];
+    const ciudad = val('ciudad');
+    const tel    = val('telefono');
+    const cuit   = val('cuit');
+    const ing    = val('ing-brutos');
+    const obs    = val('obs');
+    const desde  = fmtTime(document.getElementById('h-desde').value);
+    const hasta  = fmtTime(document.getElementById('h-hasta').value);
+    const fecha  = new Date().toLocaleDateString('es-AR');
+    let tipo = tipoSel === 'Otro' ? (val('otro-tipo') || 'Otro') : tipoSel;
+
+    let emoji = operacion === 'alta' ? '🟠' : '✏️';
+    let titulo = operacion === 'alta' ? 'ALTA DE CLIENTE' : 'MODIFICACIÓN DE CLIENTE';
+
+    let msg = emoji + ' *' + titulo + ' — PRONTO EXPRESS*\n';
+    msg += '📅 Fecha: ' + fecha + '\n';
+    msg += '👤 Vendedor: V' + vendedorSel + '\n';
+    if (operacion === 'modif') msg += '🔵 N° Cliente: *' + nroCliente + '*\n';
+    msg += '──────────────────────\n';
+    msg += '🏪 *' + razon + '*\n';
+    msg += '📍 ' + dom + '\n';
+    if (ciudad) msg += '🏙️ Ciudad: ' + ciudad + '\n';
+    if (tel)    msg += '📞 Tel: ' + tel + '\n';
+    msg += '──────────────────────\n';
+    if (tipo)  msg += '🏷️ Tipo: ' + tipo + '\n';
+    if (cuit)  msg += '🔢 CUIT: ' + cuit + '\n';
+    if (ing)   msg += '📋 Ing. Brutos: ' + ing + '\n';
+    msg += '📆 Día de visita: ' + diaNom + '\n';
+    msg += '📌 Zona: ' + zona + '\n';
+    msg += '🕐 Horario: ' + desde + ' a ' + hasta + '\n';
+    if (obs)   msg += '📝 ' + obs + '\n';
+
+    window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+  }
+
+  function limpiar() {
+    document.querySelectorAll('#screen-form input:not([type=radio]):not([type=time]), #screen-form textarea').forEach(el => el.value = '');
+    document.getElementById('h-desde').value = '08:00';
+    document.getElementById('h-hasta').value = '14:00';
+    document.querySelectorAll('input[name="dia"]').forEach(r => r.checked = false);
+    tipoSel = '';
+    document.querySelectorAll('.tipo-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('otro-wrap').style.display = 'none';
+    document.getElementById('error-box').style.display = 'none';
+    actualizarZona();
+  }
+</script>
+</body>
+</html>
